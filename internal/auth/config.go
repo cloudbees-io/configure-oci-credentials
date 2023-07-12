@@ -6,8 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 type Config struct {
@@ -24,7 +28,43 @@ func (c Config) Authenticate(ctx context.Context) error {
 		return fmt.Errorf("registry must be specified")
 	}
 
-	fmt.Printf("Adding authentication %s/***** for %s to ~/.docker/config.json\n", c.Username, c.Registry)
+	fmt.Printf("🔄 Authenticating OCI registry %s as %s/***** ...\n", c.Registry, c.Username)
+
+	fmt.Println("🔄 Validating credentials ...")
+
+	endpointStr := c.Registry
+	if !strings.HasPrefix(endpointStr, "http://") && !strings.HasPrefix(endpointStr, "https://") {
+		// default is to assume https
+		endpointStr = "https://" + endpointStr
+	}
+	endpointStr = strings.TrimSuffix(endpointStr, "/") + "/v2/"
+
+	pingClient := &http.Client{
+		Timeout: 15 * time.Second,
+	}
+
+	req, err := http.NewRequest(http.MethodGet, endpointStr, nil)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth(c.Username, c.Password)
+
+	resp, err := pingClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		fmt.Println("❌ Invalid credentials")
+		return fmt.Errorf("supplied credentials failed to autenticate to %s", endpointStr)
+	} else if resp.StatusCode/100 != 2 {
+		fmt.Printf("❌ Unexpected error\nHTTP/%d %s\n", resp.StatusCode, resp.Status)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to authenticate to remote registry\nHTTP/%d %s\n%s", resp.StatusCode, resp.Status, string(body))
+	}
+
+	fmt.Println("✅ Credentials validated")
 
 	homePath := os.Getenv("HOME")
 	kubePath := filepath.Join(homePath, ".docker")
@@ -37,7 +77,10 @@ func (c Config) Authenticate(ctx context.Context) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("could not read %s: %w", configPath, err)
 	} else if errors.Is(err, os.ErrNotExist) {
+		fmt.Println("🔄 Creating ~/.docker/config.json ...")
 		bytes = []byte("{}")
+	} else {
+		fmt.Println("🔄 Merging with existing ~/.docker/config.json ...")
 	}
 
 	var config map[string]interface{}
@@ -82,5 +125,11 @@ func (c Config) Authenticate(ctx context.Context) error {
 		return err
 	}
 
-	return os.WriteFile(configPath, updated, 0644)
+	if err := os.WriteFile(configPath, updated, 0644); err != nil {
+		return err
+	}
+
+	fmt.Println("✅ ~/.docker/config.json updated")
+
+	return nil
 }

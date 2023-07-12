@@ -1,0 +1,41 @@
+name: Test on GHA
+
+on: [ push ]
+
+jobs:
+  compat-check:
+    runs-on: ubuntu-latest
+    name: Check the action running on GHA
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Compat action
+        # Now we run our action
+        uses: ./.github/actions/compat
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY_HOSTNAME }}
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      - name: Extract Config
+        # GitHub Actions gives each dockerfile step their own home as /github/home but wipes for the next
+        # such dockerfile step. Because our container runs as root, we have to fix the permissions
+        # fixing the permissions requires running a docker action, so we need to pull the files with
+        # the config.json out to somewhere safe
+        run: |
+          mv /home/runner/work/_temp/_github_home $PWD
+      - name: Fix Permissions
+        # Now we can use a container action to fix the file permissions (the container runs as root, so
+        # can set the owner to whatever you like
+        uses: docker://alpine:3.18
+        with:
+          entrypoint: sh
+          args: -c "chown -R 1001:123 $PWD/_github_home/.docker"
+      - name: Fix Config
+        run: |
+          echo "DOCKER_CONFIG=$PWD/_github_home/.docker" >> $GITHUB_ENV
+      - name: Test authentication
+        # If we can pull from our private registry, we have authenticated correctly
+        run: |
+          docker pull ${{ vars.DOCKER_REGISTRY_HOSTNAME }}/staging/configure-oci-credentials:vmain

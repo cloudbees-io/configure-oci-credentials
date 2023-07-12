@@ -7,6 +7,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/cloudbees-io/configure-oci-credentials/internal/auth"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -29,7 +30,9 @@ func init() {
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 
-	// inputString, etc
+	inputString("registry", "", "The registry server to authenticate to")
+	inputString("username", "", "The username to authenticate with")
+	inputString("password", "", "The password to authenticate with")
 }
 
 func inputString(name string, value string, usage string) {
@@ -55,6 +58,12 @@ func cliContext() context.Context {
 }
 
 func doConfigure(command *cobra.Command, args []string) error {
-	_ = cliContext()
-	return nil
+	ctx := cliContext()
+
+	var cfg auth.Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return err
+	}
+
+	return cfg.Authenticate(ctx)
 }

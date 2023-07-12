@@ -1,0 +1,26 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: action
+name: 'Configure OCI Credentials For CloudBees Automations'
+description: 'Configure OCI credentials for use with tools that interact with OCI registries'
+inputs:
+  registry:
+    description: The registry server such as `docker.example.com`.
+    required: true
+  username:
+    description: The username to authenticate with.
+    required: true
+  password:
+    description: The password to authenticate with.
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Configure OCI Credentials For CloudBees Automations
+      uses: docker://registry.saas-dev.beescloud.com/staging/configure-oci-credentials:v0.0.1-alpha
+      env:
+        INPUT_REGISTRY: ${{ inputs.registry }}
+        INPUT_USERNAME: ${{ inputs.username }}
+        INPUT_PASSWORD: ${{ inputs.password }}
+      with:
+        entrypoint: configure-oci-credentials
+        args: "" # SDP-6025

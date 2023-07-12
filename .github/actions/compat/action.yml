@@ -1,0 +1,19 @@
+name: 'Configure OCI Credentials For CloudBees Automations'
+description: 'Configure OCI credential'
+inputs:
+  registry:
+    description: The registry server such as `docker.example.com`.
+    required: true
+  username:
+    description: The username to authenticate with.
+    required: true
+  password:
+    description: The password to authenticate with.
+    required: false
+
+
+runs:
+  using: 'docker'
+  image: '../../../Dockerfile'
+  env:
+    HOME: /github/home

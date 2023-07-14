@@ -16,7 +16,7 @@ runs:
   using: composite
   steps:
     - name: Configure OCI Credentials For CloudBees Automations
-      uses: docker://registry.saas-dev.beescloud.com/staging/configure-oci-credentials:v0.0.1-beta
+      uses: docker://registry.saas-dev.beescloud.com/staging/configure-oci-credentials:v0.0.1
       env:
         INPUT_REGISTRY: ${{ inputs.registry }}
         INPUT_USERNAME: ${{ inputs.username }}

@@ -1,0 +1,116 @@
+= CloudBees action: Configure OCI credentials
+
+Use this action to log in a local container configuration file to an Open Container Initiative (OCI) registry, such as link:https://hub.docker.com/[Docker Hub], with a username and password.
+
+== Prerequisites
+
+Make sure to add the following to your YAML file:
+
+[source,yaml]
+----
+      - name: Check out repo
+        uses: actions/checkout@v3
+----
+
+== Inputs
+
+[cols="2a,1a,1a,3a",options="header"]
+.Input details
+|===
+
+| Input name
+| Data type
+| Required?
+| Description
+
+| `registry`
+| String
+| Yes
+| The registry server URL.
+
+| `username`
+| String
+| Yes
+| The registry username.
+
+| `password`
+| String
+| Yes
+| The registry password.
+|===
+
+== Usage examples
+
+=== Log in to registry, build and push a container image
+
+Log in to an OCI registry, then build, tag, and push a container image to it.
+
+[source,yaml]
+----
+      - name: Log in to OCI registry
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: ${{ var.OCI_REGISTRY }}
+          username: ${{secret.OCI_USERNAME }}
+          password: ${{secret.OCI_PASSWORD }}
+
+      - name: Build, tag, and push container image to OCI registry
+        uses: cloudbees-io/kaniko@v1
+        with:
+          destination: ${{ var.OCI_REGISTRY }}/my-oci-repo:latest
+----
+
+For more information, refer to xref:deploy-tools:kaniko.adoc[].
+
+=== Log in to registry, package and push a Helm chart
+
+Log in to an OCI registry, then package and push a Helm chart to it.
+
+[source,yaml]
+----
+      - name: Log in to OCI registry
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: ${{ var.OCI_REGISTRY }}
+          username: ${{secret.OCI_USERNAME }}
+          password: ${{secret.OCI_PASSWORD }}
+
+      - name: Package and push Helm chart to OCI registry
+        uses: docker://alpine/helm:latest
+        run: |
+          helm package my-oci-repo
+          helm push my-oci-repo-0.1.0.tgz ${{ var.OCI_REGISTRY }}
+----
+
+NOTE: (for Kaniko users) Helm and Kaniko use the same credential store, so you can use the same credentials for both.
+
+=== Log in to multiple OCI registries
+
+Merge the credentials into `\~/.docker/config.json` so you can chain multiple times, to ensure you have sufficient credentials to build and publish an image.
+
+[source,yaml]
+----
+      - name: Log in to Docker Hub registry
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: https://index.docker.io/v1/
+          username: ${{secret.DOCKER_USERNAME }}
+          password: ${{secret.DOCKER_PASSWORD }}
+
+      - name: Log in to OCI registry
+        uses: cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: ${{ var.OCI_REGISTRY }}
+          username: ${{secret.OCI_USERNAME }}
+          password: ${{secret.OCI_PASSWORD }}
+----
+
+== License
+
+This code is made available under the 
+link:https://opensource.org/license/mit/[MIT license].
+
+== References
+
+* Learn more about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform-actions/latest/[using actions in CloudBees workflows].
+* Learn about link:https://docs.cloudbees.com/docs/cloudbees-saas-platform/latest/[the CloudBees platform].

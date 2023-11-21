@@ -50,14 +50,14 @@ Log in to an OCI registry, then build, tag, and push a container image to it.
       - name: Log in to OCI registry
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
-          registry: ${{ var.OCI_REGISTRY }}
-          username: ${{secret.OCI_USERNAME }}
-          password: ${{secret.OCI_PASSWORD }}
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ secrets.OCI_USERNAME }}
+          password: ${{ secrets.OCI_PASSWORD }}
 
       - name: Build, tag, and push container image to OCI registry
         uses: cloudbees-io/kaniko@v1
         with:
-          destination: ${{ var.OCI_REGISTRY }}/my-oci-repo:latest
+          destination: ${{ vars.OCI_REGISTRY }}/my-oci-repo:latest
 ----
 
 For more information, refer to xref:deploy-tools:kaniko.adoc[].
@@ -71,15 +71,15 @@ Log in to an OCI registry, then package and push a Helm chart to it.
       - name: Log in to OCI registry
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
-          registry: ${{ var.OCI_REGISTRY }}
-          username: ${{secret.OCI_USERNAME }}
-          password: ${{secret.OCI_PASSWORD }}
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ secrets.OCI_USERNAME }}
+          password: ${{ secrets.OCI_PASSWORD }}
 
       - name: Package and push Helm chart to OCI registry
         uses: docker://alpine/helm:latest
         run: |
           helm package my-oci-repo
-          helm push my-oci-repo-0.1.0.tgz ${{ var.OCI_REGISTRY }}
+          helm push my-oci-repo-0.1.0.tgz ${{ vars.OCI_REGISTRY }}
 ----
 
 NOTE: (for Kaniko users) Helm and Kaniko use the same credential store, so you can use the same credentials for both.
@@ -94,15 +94,15 @@ Merge the credentials into `\~/.docker/config.json` so you can chain multiple ti
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
           registry: https://index.docker.io/v1/
-          username: ${{secret.DOCKER_USERNAME }}
-          password: ${{secret.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Log in to OCI registry
         uses: cloudbees-io/configure-oci-credentials@v1
         with:
-          registry: ${{ var.OCI_REGISTRY }}
-          username: ${{secret.OCI_USERNAME }}
-          password: ${{secret.OCI_PASSWORD }}
+          registry: ${{ vars.OCI_REGISTRY }}
+          username: ${{ secrets.OCI_USERNAME }}
+          password: ${{ secrets.OCI_PASSWORD }}
 ----
 
 == License

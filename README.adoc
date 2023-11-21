@@ -9,7 +9,7 @@ Make sure to add the following to your YAML file:
 [source,yaml]
 ----
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v1
 ----
 
 == Inputs
@@ -59,8 +59,6 @@ Log in to an OCI registry, then build, tag, and push a container image to it.
         with:
           destination: ${{ vars.OCI_REGISTRY }}/my-oci-repo:latest
 ----
-
-For more information, refer to xref:deploy-tools:kaniko.adoc[].
 
 === Log in to registry, package and push a Helm chart
 

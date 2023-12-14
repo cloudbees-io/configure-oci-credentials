@@ -24,6 +24,12 @@ type Config struct {
 	Password string
 }
 
+var authEndpoints = map[string]string{
+	"index.docker.io": "https://auth.docker.io/token",
+	"docker.io":       "https://auth.docker.io/token",
+	"ghcr.io":         "https://ghcr.io/token",
+}
+
 func (c Config) Authenticate(ctx context.Context) error {
 	if c.Registry == "" {
 		return fmt.Errorf("registry must be specified")
@@ -33,19 +39,7 @@ func (c Config) Authenticate(ctx context.Context) error {
 
 	fmt.Println("🔄 Validating credentials ...")
 
-	endpointStr := c.Registry
-
-	// in case of docker hub - endpoint set to https://auth.docker.io/token
-	// else it is not validating correctly - issue SDP-9313
-	if isDockerHubRegistry(c.Registry) {
-		endpointStr = "https://auth.docker.io/token"
-	} else {
-		if !strings.HasPrefix(endpointStr, "http://") && !strings.HasPrefix(endpointStr, "https://") {
-			// default is to assume https
-			endpointStr = "https://" + endpointStr
-		}
-		endpointStr = strings.TrimSuffix(endpointStr, "/") + "/v2/"
-	}
+	endpointStr := getAuthEndpoint(c.Registry)
 
 	pingClient := &http.Client{
 		Timeout: 15 * time.Second,
@@ -149,6 +143,39 @@ func (c Config) Authenticate(ctx context.Context) error {
 	return nil
 }
 
+func host(registry string) string {
+	if !strings.HasPrefix(registry, "https://") {
+		// url.parse will fail without  a schema http /https
+		registry = "https://" + registry
+	}
+	parsed, err := url.Parse(registry)
+	if err != nil {
+		fmt.Println("Error parsing registry : " + err.Error())
+		return ""
+	}
+
+	return parsed.Host
+}
+
+func getAuthEndpoint(registry string) string {
+	endpoint, ok := authEndpoints[host(registry)]
+
+	if ok {
+		return endpoint
+	}
+
+	endpointStr := registry
+
+	if !strings.HasPrefix(endpointStr, "http://") && !strings.HasPrefix(endpointStr, "https://") {
+		// default is to assume https
+		endpointStr = "https://" + endpointStr
+	}
+
+	endpointStr = strings.TrimSuffix(endpointStr, "/") + "/v2/"
+
+	return endpointStr
+}
+
 func isDockerHubRegistry(registry string) bool {
 	if !strings.HasPrefix(registry, "https://") {
 		// url.parse will fail without  a schema http /https
@@ -156,7 +183,7 @@ func isDockerHubRegistry(registry string) bool {
 	}
 	parsed, err := url.Parse(registry)
 	if err != nil {
-		fmt.Println("Error parsing resistry : " + err.Error())
+		fmt.Println("Error parsing registry : " + err.Error())
 		return false
 	}
 	return (parsed.Host == "index.docker.io" || parsed.Host == "docker.io")

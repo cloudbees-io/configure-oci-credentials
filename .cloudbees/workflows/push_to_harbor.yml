@@ -40,5 +40,5 @@ jobs:
       kind: build
       with:
         context: ${{ cloudbees.workspace }}
-        destination: registry.saas-dev.beescloud.com/staging/configure-oci-credentials:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/configure-oci-credentials:v0.0.3' || '' }}
+        destination: registry.saas-dev.beescloud.com/staging/configure-oci-credentials:${{ cloudbees.scm.sha }}${{ cloudbees.scm.branch == 'main' && ',registry.saas-dev.beescloud.com/staging/configure-oci-credentials:v0.0.4' || '' }}
         

@@ -16,7 +16,7 @@ runs:
   using: composite
   steps:
     - name: Configure OCI Credentials For CloudBees Automations
-      uses: docker://public.ecr.aws/l7o7z1g8/actions/configure-oci-credentials:${{ action.scm.sha }}
+      uses: docker://020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/configure-oci-credentials:${{ action.scm.sha }}
       env:
         INPUT_REGISTRY: ${{ inputs.registry }}
         INPUT_USERNAME: ${{ inputs.username }}

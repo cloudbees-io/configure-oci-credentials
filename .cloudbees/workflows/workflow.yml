@@ -9,19 +9,76 @@ on:
       - "*"
 
 jobs:
-  compat-check:
-    #name: Check the action running on CBA
+  build:
+    if: cloudbees.api.url == 'https://api.saas-preprod.beescloud.com' || cloudbees.api.url == 'https://api.cloudbees.io'
+    permissions:
+      scm-token-own: read
+      id-token: write
     steps:
-      - uses: cloudbees-io/configure-oci-credentials@v0
+      - name: Checkout
+        uses: https://github.com/cloudbees-io/checkout@v1
+
+      - name: Self Test
+        uses: docker://golang:1.21.7
+        run: |
+          make verify
+
+      - name: Login to AWS
+        uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
         with:
-          registry: ${{ vars.HARBOR_SERVER }}
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-      - uses: docker://alpine:3.18
+          aws-region: us-east-1
+          role-to-assume: ${{ vars.oidc_staging_iam_role }}
+          role-duration-seconds: "3600"
+
+      - name: Configure container registry for Staging ECR
+        uses: https://github.com/cloudbees-io/configure-ecr-credentials@v1
+
+      - name: Login to Dockerhub using Cloudbees service account
+        uses: https://github.com/cloudbees-io/configure-oci-credentials@v1
+        with:
+          registry: docker.io
+          username: ${{ secrets.e5bbc3_dockerhub_user }}
+          password: ${{ secrets.e5bbc3_dockerhub_password }}
+
+      - name: Build image
+        uses: https://github.com/cloudbees-io/kaniko@v1
+        with:
+          destination: 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/configure-oci-credentials:${{ cloudbees.scm.sha }}
+          labels: maintainer=sdp-pod-3,email=engineering@cloudbees.io
+
+  test:
+    #name: Check the action running on CBA
+    needs:
+      - build
+    permissions:
+      id-token: write
+    steps:
+      - name: Login to AWS
+        uses: https://github.com/cloudbees-io/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ vars.oidc_staging_iam_role }}
+          role-duration-seconds: "3600"
+
+      - name: Get ECR credentials
+        id: credentials
+        uses: docker://amazon/aws-cli:2.12.6
+        run: |
+          aws ecr get-login-password --region us-east-1 > "${CLOUDBEES_OUTPUTS}/password"
+
+      - uses: ./.cloudbees/testing
+        with:
+          registry: 020229604682.dkr.ecr.us-east-1.amazonaws.com
+          username: AWS
+          password: ${{ steps.credentials.outputs.password }}
+
+      - uses: docker://library/alpine:3.19
         # We need something that uses ~/.docker/config.json but doesn't need a docker daemon
         # ideally we would just use ghcr.io/regclient/regctl:latest but that is a non-root user
         run: |
           apk add -U --no-cache curl ca-certificates
+
           curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >/usr/local/bin/regctl
           chmod 755 /usr/local/bin/regctl
-          regctl image inspect ${{ vars.HARBOR_SERVER }}/staging/configure-oci-credentials:vmain
+
+          regctl image inspect 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/configure-oci-credentials:${{ cloudbees.scm.sha }}

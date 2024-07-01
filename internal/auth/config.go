@@ -59,7 +59,7 @@ func (c Config) Authenticate(ctx context.Context) error {
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		fmt.Println("❌ Invalid credentials")
-		return fmt.Errorf("supplied credentials failed to autenticate to %s", endpointStr)
+		return fmt.Errorf("supplied credentials failed to authenticate to %s", endpointStr)
 	} else if resp.StatusCode/100 != 2 {
 		fmt.Printf("❌ Unexpected error\nHTTP/%d %s\n", resp.StatusCode, resp.Status)
 		body, _ := io.ReadAll(resp.Body)

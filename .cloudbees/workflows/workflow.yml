@@ -19,7 +19,7 @@ jobs:
         uses: https://github.com/cloudbees-io/checkout@v1
 
       - name: Self Test
-        uses: docker://golang:1.22.5
+        uses: docker://golang:1.24.1
         run: |
           make verify
 

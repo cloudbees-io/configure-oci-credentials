@@ -19,7 +19,7 @@ jobs:
         uses: https://github.com/cloudbees-io/checkout@v1
 
       - name: Self Test
-        uses: docker://golang:1.24.1
+        uses: docker://golang:1.24.4
         run: |
           make verify
 
@@ -55,7 +55,7 @@ jobs:
 
       - name: Get ECR credentials
         id: credentials
-        uses: docker://amazon/aws-cli:2.12.6
+        uses: docker://amazon/aws-cli:2.27.38
         run: |
           aws ecr get-login-password --region us-east-1 > "${CLOUDBEES_OUTPUTS}/password"
 
@@ -65,7 +65,7 @@ jobs:
           username: AWS
           password: ${{ steps.credentials.outputs.password }}
 
-      - uses: docker://library/alpine:3.19
+      - uses: docker://library/alpine:3.22
         # We need something that uses ~/.docker/config.json but doesn't need a docker daemon
         # ideally we would just use ghcr.io/regclient/regctl:latest but that is a non-root user
         run: |

@@ -1,6 +1,6 @@
 module github.com/cloudbees-io/configure-oci-credentials
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/spf13/cobra v1.9.1

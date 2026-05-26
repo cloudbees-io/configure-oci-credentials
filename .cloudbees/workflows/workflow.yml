@@ -73,4 +73,4 @@ jobs:
           curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >/usr/local/bin/regctl
           chmod 755 /usr/local/bin/regctl
 
-          regctl image inspect 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/configure-oci-credentials:${{ cloudbees.scm.sha }}
+          regctl image inspect 020229604682.dkr.ecr.us-east-1.amazonaws.com/actions/configure-oci-credentials:${{ cloudbees.scm.branch }}-${{ cloudbees.scm.sha }}

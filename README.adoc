@@ -1,4 +1,4 @@
-= CloudBees action: Configure OCI credentials
+= CloudBees action: Configure OCI credentials 
 
 Use this action to log in a local container configuration file to an Open Container Initiative (OCI) registry, such as link:https://hub.docker.com/[Docker Hub], with a username and password.
 

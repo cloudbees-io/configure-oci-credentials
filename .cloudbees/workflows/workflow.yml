@@ -14,6 +14,7 @@ jobs:
     if: cloudbees.api.url == 'https://api.saas-preprod.beescloud.com' || cloudbees.api.url == 'https://api.cloudbees.io'
     permissions:
       scm-token-own: read
+      scm-token-org: read
       id-token: write
     steps:
       - name: Checkout
@@ -26,7 +27,7 @@ jobs:
 
       - id: build
         name: Build, scan and push to ECR
-        uses: calculi-corp/cb-internal-shared-actions/build@v8
+        uses: calculi-corp/cb-internal-shared-actions/build/action@v8
         with:
           go-binary-build: "true"
           go-binary-name: configure-oci-credentials
